@@ -7,74 +7,40 @@ use Illuminate\Http\Request;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Http\JsonResponse;
+use App\Http\Requests\RegisterUserRequest;
+use App\Http\Requests\LoginUserRequest;
 
 class UserController extends Controller
 {
-    // register a new user
-    public function register(Request $request)
+    public function register(RegisterUserRequest $request)
     {
-
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:8|confirmed',
-        ]);
-
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
-            // 'password' => bcrypt($request->password),
             'password' => $request->password,
         ]);
 
-        return response()->json(['message' => 'User registered successfully', 'user' => $user], 201);
+        return response()->json(['message' => 'Usuário criado com sucesso!', 'user' => $user], 201);
     }
 
-    // public function login(Request $request): JsonResponse
-    // {
-    //     $credentials = $request->validate([
-    //         'email' => ['required', 'email'],
-    //         'password' => ['required'],
-    //     ]);
+    public function login(LoginUserRequest $request): JsonResponse
+    {
+        $credentials = $request->validated();
 
-    //     $user = User::where('email', $credentials['email'])->first();
+        $user = User::where('email', $credentials['email'])->first();
 
-    //     if (!$user || !Hash::check($credentials['password'], $user->password)) {
-    //         return response()->json([
-    //             'message' => 'Credenciais inválidas.'
-    //         ], 401);
-    //     }
+        if (!$user || !Hash::check($credentials['password'], $user->password)) {
+            return response()->json([
+                'message' => 'Credenciais inválidas.'
+            ], 401);
+        }
 
-    //     $token = $user->createToken('auth_token')->plainTextToken;
+        $token = $user->createToken('auth_token')->plainTextToken;
 
-    //     return response()->json([
-    //         'message' => 'Login realizado com sucesso.',
-    //         'user' => $user,
-    //         'token' => $token,
-    //     ]);
-    // }
-    public function login(Request $request): JsonResponse
-{
-    $credentials = $request->validate([
-        'email' => ['required', 'email'],
-        'password' => ['required'],
-    ]);
-
-    $user = User::where('email', $credentials['email'])->first();
-
-    if (!$user || !Hash::check($credentials['password'], $user->password)) {
         return response()->json([
-            'message' => 'Credenciais inválidas.'
-        ], 401);
+            'message' => 'Login realizado com sucesso.',
+            'user' => $user,
+            'token' => $token,
+        ]);
     }
-
-    $token = $user->createToken('auth_token')->plainTextToken;
-
-    return response()->json([
-        'message' => 'Login realizado com sucesso.',
-        'user' => $user,
-        'token' => $token,
-    ]);
-}
-
 }
